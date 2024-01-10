@@ -15,12 +15,16 @@ module.exports = {
           email: req.body?.email,
         };
         Users.getByEmail(req.con, req.body?.email, function (err, rows) {
-          if (rows.length > 0) {
-            res.send({ msg: "already-exist" });
+          if (!err) {
+            if (rows.length > 0) {
+              res.send({ msg: "already-exist" });
+            } else {
+              Users.add(req.con, datas, function (err) {
+                res.send({ msg: "saved" });
+              });
+            }
           } else {
-            Users.add(req.con, datas, function (err) {
-              res.send({ msg: "saved" });
-            });
+            console.error(err);
           }
         });
       } else {
@@ -46,12 +50,16 @@ module.exports = {
           email: req.body?.email,
         };
         Users.getById(req.con, req.body?.id, function (err, rows) {
-          if (rows.length > 0) {
-            Users.update(req.con, datas, function (err) {
-              res.send({ msg: "updated" });
-            });
+          if (!err) {
+            if (rows.length > 0) {
+              Users.update(req.con, datas, function (err) {
+                res.send({ msg: "updated" });
+              });
+            } else {
+              res.send({ msg: "invalid-ID" });
+            }
           } else {
-            res.send({ msg: "invalid-ID" });
+            console.error(err);
           }
         });
       } else {
@@ -67,7 +75,11 @@ module.exports = {
    */
   get: function (req, res) {
     Users.getAll(req.con, function (err, rows) {
-      res.send(rows);
+      if (!err) {
+        res.send(rows);
+      } else {
+        console.error(err);
+      }
     });
   },
   /***
@@ -77,7 +89,11 @@ module.exports = {
    */
   getById: function (req, res) {
     Users.getById(req.con, req.body?.id, function (err, rows) {
-      res.send(rows);
+      if (!err) {
+        res.send(rows);
+      } else {
+        console.error(err);
+      }
     });
   },
   /***
@@ -88,12 +104,16 @@ module.exports = {
   delete: function (req, res) {
     var id = req.body?.id;
     Users.getById(req.con, id, function (err, rows) {
-      if (rows.length > 0) {
-        Users.deleteById(req.con, id, function (err) {
-          res.send({ msg: "deleted" });
-        });
+      if (!err) {
+        if (rows.length > 0) {
+          Users.deleteById(req.con, id, function (err) {
+            res.send({ msg: "deleted" });
+          });
+        } else {
+          res.send({ msg: "invalid-ID" });
+        }
       } else {
-        res.send({ msg: "invalid-ID" });
+        console.error(err);
       }
     });
   },
