@@ -1,4 +1,12 @@
+const Joi = require("joi");
 const Users = require("../model/User");
+
+//Validate
+const userSchema = Joi.object().keys({
+  email: Joi.string().email().required(),
+  name: Joi.string().alphanum().min(3).max(25)
+    .optional(),
+});
 
 module.exports = {
   /***
@@ -8,31 +16,32 @@ module.exports = {
    * @param {String} name the user name
    */
   add: function (req, res) {
-    if (req.body?.email) {
-      if (req.body?.name) {
-        var datas = {
-          name: req.body?.name,
-          email: req.body?.email,
-        };
-        Users.getByEmail(req.con, req.body?.email, function (err, rows) {
-          if (!err) {
-            if (rows.length > 0) {
-              res.send({ msg: "already-exist" });
-            } else {
-              Users.add(req.con, datas, function (err) {
-                res.send({ msg: "saved" });
-              });
-            }
-          } else {
-            console.error(err);
-          }
-        });
-      } else {
-        res.send({ msg: "no-name" });
-      }
-    } else {
-      res.send({ msg: "no-email" });
+    const result = userSchema.validate(req.body);
+    if (result.error) {
+      res.status(422).json({
+        success: false,
+        msg: `Validation err: ${result.error.details[0].message}`,
+      });
+      return;
     }
+    var datas = {
+      name: req.body?.name,
+      email: req.body?.email,
+    };
+    Users.getByEmail(req.con, req.body?.email, function (err, rows) {
+      if (!err) {
+        if (rows.length > 0) {
+          res.send({ msg: "already-exist" });
+        } else {
+          Users.add(req.con, datas, function (err) {
+            res.send({ msg: "saved" });
+          });
+        }
+      } else {
+        console.error(err);
+      }
+    });
+  
   },
   /***
    * Update
@@ -42,32 +51,36 @@ module.exports = {
    * @param {String} name the user name
    */
   update: function (req, res) {
-    if (req.body?.email) {
-      if (req.body?.name) {
-        var datas = {
-          id: req.body?.id,
-          name: req.body?.name,
-          email: req.body?.email,
-        };
-        Users.getById(req.con, req.body?.id, function (err, rows) {
-          if (!err) {
-            if (rows.length > 0) {
-              Users.update(req.con, datas, function (err) {
-                res.send({ msg: "updated" });
-              });
-            } else {
-              res.send({ msg: "invalid-ID" });
-            }
-          } else {
-            console.error(err);
-          }
-        });
-      } else {
-        res.send({ msg: "no-name" });
-      }
-    } else {
-      res.send({ msg: "no-email" });
+    const validate = {
+      name: req.body?.name,
+      email: req.body?.email
     }
+    const result = userSchema.validate(validate);
+    if (result.error) {
+      res.status(422).json({
+        success: false,
+        msg: `Validation err: ${result.error.details[0].message}`,
+      });
+      return;
+    }
+    var datas = {
+      id: req.body?.id,
+      name: req.body?.name,
+      email: req.body?.email,
+    };
+    Users.getById(req.con, req.body?.id, function (err, rows) {
+      if (!err) {
+        if (rows.length > 0) {
+          Users.update(req.con, datas, function (err) {
+            res.send({ msg: "updated" });
+          });
+        } else {
+          res.send({ msg: "invalid-ID" });
+        }
+      } else {
+        console.error(err);
+      }
+    });
   },
   /***
    * Retrieve
